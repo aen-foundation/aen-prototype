@@ -1,0 +1,14 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://aen.foundation/schemas/0.1/order-status.json",
+	"title": "Order status (prototype 0.1, draft)",
+	"description": "Response of an order.status action. Polling is the baseline way to learn about changes; no callback is required.",
+	"type": "object",
+	"required": ["orderId", "status", "updatedAt"],
+	"additionalProperties": false,
+	"properties": {
+		"orderId": { "type": "string", "minLength": 8, "maxLength": 64 },
+		"status": { "enum": ["pending_payment", "paid", "preparing", "ready", "cancelled", "expired"] },
+		"updatedAt": { "type": "string", "format": "date-time" }
+	}
+}

@@ -1,0 +1,129 @@
+{
+	"aen": "0.1",
+	"id": "cafe.example.org",
+	"kind": "business",
+	"name": "Corner Cafe",
+	"url": "https://cafe.example.org",
+	"categories": [
+		"food",
+		"coffee"
+	],
+	"keywords": [
+		"espresso",
+		"croissant",
+		"flat white"
+	],
+	"countries": [
+		"LK"
+	],
+	"actions": [
+		{
+			"id": "menu",
+			"capability": "catalog.search",
+			"method": "GET",
+			"path": "/menu",
+			"description": "List the menu with current prices.",
+			"input": {
+				"type": "object",
+				"properties": {
+					"q": {
+						"type": "string"
+					}
+				}
+			},
+			"auth": {
+				"type": "none"
+			},
+			"sideEffects": false
+		},
+		{
+			"id": "order",
+			"capability": "order.create",
+			"method": "POST",
+			"path": "/orders",
+			"input": {
+				"type": "object",
+				"required": [
+					"items"
+				]
+			},
+			"auth": {
+				"type": "oauth2-device",
+				"scopes": [
+					"order.create"
+				],
+				"deviceEndpoint": "/device/authorize",
+				"tokenEndpoint": "/token"
+			},
+			"sideEffects": true,
+			"requiresUserConfirmation": true,
+			"payment": true
+		},
+		{
+			"id": "pay",
+			"capability": "order.pay",
+			"method": "POST",
+			"path": "/orders/{orderId}/pay",
+			"description": "Pay an order with a one-time wallet token for exactly the confirmed amount.",
+			"input": {
+				"type": "object",
+				"required": [
+					"payment"
+				],
+				"properties": {
+					"payment": {
+						"type": "object",
+						"required": [
+							"type",
+							"token"
+						],
+						"properties": {
+							"type": {
+								"type": "string"
+							},
+							"token": {
+								"type": "string"
+							}
+						}
+					}
+				}
+			},
+			"auth": {
+				"type": "oauth2-device",
+				"scopes": [
+					"order.create"
+				],
+				"deviceEndpoint": "/device/authorize",
+				"tokenEndpoint": "/token"
+			},
+			"sideEffects": true,
+			"requiresUserConfirmation": true,
+			"payment": true
+		},
+		{
+			"id": "order-status",
+			"capability": "order.status",
+			"method": "GET",
+			"path": "/orders/{orderId}",
+			"auth": {
+				"type": "oauth2-device",
+				"scopes": [
+					"order.status"
+				],
+				"deviceEndpoint": "/device/authorize",
+				"tokenEndpoint": "/token"
+			},
+			"sideEffects": false
+		}
+	],
+	"payment": {
+		"modes": [
+			"handoff",
+			"token"
+		],
+		"provider": "test-pay",
+		"tokenTypes": [
+			"test.token"
+		]
+	}
+}

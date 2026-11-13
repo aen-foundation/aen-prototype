@@ -1,0 +1,1 @@
+{"aen": "0.1", "id": "bad.example.org", "kind": "business", "name": "Bad", "url": "https://bad.example.org", "actions": [{"id": "x", "capability": "contact.request", "method": "POST", "path": "/x", "auth": {"type": "none"}, "sideEffects": true, "requiresUserConfirmation": true, "sharesPersonalData": [{"field": "email", "kind": "email"}]}]}

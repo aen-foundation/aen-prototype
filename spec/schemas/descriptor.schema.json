@@ -1,0 +1,385 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://aen.foundation/schemas/0.1/descriptor.json",
+	"title": "AEN descriptor (prototype 0.1, draft)",
+	"description": "What a business, vendor or directory publishes at /.well-known/aen.json: its identity, search keys and the schema of its actions (how to call it). Never business data (prices, menus, availability, descriptions, addresses, policies): agents get that by calling the business. Public, and never contains secrets.",
+	"type": "object",
+	"required": [
+		"aen",
+		"id",
+		"kind",
+		"name"
+	],
+	"properties": {
+		"aen": {
+			"const": "0.1"
+		},
+		"id": {
+			"description": "The host this descriptor is served from. Directories check it against the URL they fetched it from.",
+			"type": "string",
+			"pattern": "^[a-z0-9]([a-z0-9.-]*[a-z0-9])?(:[0-9]{2,5})?$"
+		},
+		"kind": {
+			"enum": [
+				"business",
+				"vendor",
+				"directory"
+			]
+		},
+		"name": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 120
+		},
+		"url": {
+			"description": "Base URL that action paths are resolved against. HTTPS is required; plain HTTP is allowed only for loopback addresses, for local development.",
+			"type": "string",
+			"format": "uri",
+			"pattern": "^(https://[^/]|http://(localhost|127\\.0\\.0\\.1|\\[::1\\])(:[0-9]+)?(/|$))"
+		},
+		"categories": {
+			"type": "array",
+			"maxItems": 20,
+			"items": {
+				"type": "string",
+				"maxLength": 60
+			}
+		},
+		"actions": {
+			"type": "array",
+			"maxItems": 50,
+			"items": {
+				"$ref": "#/$defs/action"
+			}
+		},
+		"payment": {
+			"$ref": "#/$defs/payment"
+		},
+		"signing": {
+			"description": "Ed25519 signature over the canonical JSON of this document (with signing.signature removed). Pin the key in DNS: _aen.<host> TXT \"v=aen1; key=sha256:<hex of the raw public key>\".",
+			"type": "object",
+			"required": [
+				"alg",
+				"publicKey",
+				"signature"
+			],
+			"additionalProperties": false,
+			"properties": {
+				"alg": {
+					"const": "Ed25519"
+				},
+				"publicKey": {
+					"type": "string",
+					"pattern": "^[A-Za-z0-9_-]{43}$"
+				},
+				"signature": {
+					"type": "string",
+					"pattern": "^[A-Za-z0-9_-]{86}$"
+				}
+			}
+		},
+		"events": {
+			"description": "Optional Server-Sent Events stream. Emits `descriptor-changed` so a directory can re-fetch at once. It carries no data to trust, only a hint.",
+			"type": "object",
+			"required": [
+				"path"
+			],
+			"additionalProperties": false,
+			"properties": {
+				"path": {
+					"type": "string",
+					"pattern": "^/(?!/)(?!.*\\.\\.)[A-Za-z0-9._~/-]*$"
+				}
+			}
+		},
+		"keywords": {
+			"description": "Search keys the business lets directories index (with name, categories, capabilities and countries).",
+			"type": "array",
+			"maxItems": 20,
+			"items": {
+				"type": "string",
+				"minLength": 1,
+				"maxLength": 40
+			}
+		},
+		"countries": {
+			"description": "Search keys: ISO country codes where the business operates.",
+			"type": "array",
+			"maxItems": 50,
+			"items": {
+				"type": "string",
+				"pattern": "^[A-Z]{2}$"
+			}
+		}
+	},
+	"patternProperties": {
+		"^x-": {}
+	},
+	"additionalProperties": false,
+	"$defs": {
+		"payment": {
+			"description": "How the business takes payment. handoff: the user pays on the provider's own page. token: the user's own wallet issues a one-time token for exactly the confirmed amount and the agent sends it in order.pay. AEN never carries card data and never moves money; a token is opaque to AEN and its format belongs to the payment provider (tokenTypes names it, for example test.token).",
+			"type": "object",
+			"required": [
+				"modes",
+				"provider"
+			],
+			"additionalProperties": false,
+			"properties": {
+				"modes": {
+					"type": "array",
+					"minItems": 1,
+					"uniqueItems": true,
+					"items": {
+						"enum": [
+							"handoff",
+							"token"
+						]
+					}
+				},
+				"provider": {
+					"type": "string",
+					"maxLength": 60
+				},
+				"tokenTypes": {
+					"type": "array",
+					"minItems": 1,
+					"maxItems": 10,
+					"items": {
+						"type": "string",
+						"pattern": "^[a-z0-9]+(\\.[a-z0-9-]+)+$"
+					}
+				}
+			},
+			"if": {
+				"properties": {
+					"modes": {
+						"type": "array",
+						"contains": {
+							"const": "token"
+						}
+					}
+				},
+				"required": [
+					"modes"
+				]
+			},
+			"then": {
+				"required": [
+					"tokenTypes"
+				],
+				"properties": {
+					"tokenTypes": {}
+				}
+			}
+		},
+		"action": {
+			"type": "object",
+			"required": [
+				"id",
+				"capability",
+				"method",
+				"path",
+				"auth",
+				"sideEffects"
+			],
+			"additionalProperties": false,
+			"properties": {
+				"id": {
+					"type": "string",
+					"pattern": "^[a-z0-9][a-z0-9_.-]{0,63}$"
+				},
+				"capability": {
+					"description": "A small core set the Foundation defines (catalog.search, availability.check, contact.request, order.create, order.pay, order.status, directory.search), or an extension named x.<namespace>.<name>. Everything else about an action (its input and output) is described by the business, not by AEN.",
+					"anyOf": [
+						{
+							"enum": [
+								"catalog.search",
+								"availability.check",
+								"contact.request",
+								"order.create",
+								"order.pay",
+								"order.status",
+								"directory.search"
+							]
+						},
+						{
+							"type": "string",
+							"pattern": "^x\\.[a-z0-9-]+(\\.[a-z0-9-]+)+$"
+						}
+					]
+				},
+				"method": {
+					"enum": [
+						"GET",
+						"POST"
+					]
+				},
+				"path": {
+					"description": "Relative to url. {name} segments are filled from the input.",
+					"type": "string",
+					"pattern": "^/(?!/)(?!.*\\.\\.)[A-Za-z0-9._~/{}-]*$"
+				},
+				"input": {
+					"description": "JSON Schema of the input object.",
+					"type": "object"
+				},
+				"auth": {
+					"type": "object",
+					"required": [
+						"type"
+					],
+					"additionalProperties": false,
+					"properties": {
+						"type": {
+							"enum": [
+								"none",
+								"oauth2-device"
+							]
+						},
+						"scopes": {
+							"type": "array",
+							"minItems": 1,
+							"items": {
+								"type": "string",
+								"maxLength": 60
+							}
+						},
+						"tokenEndpoint": {
+							"type": "string",
+							"pattern": "^/(?!/)(?!.*\\.\\.)[A-Za-z0-9._~/-]*$"
+						},
+						"deviceEndpoint": {
+							"type": "string",
+							"pattern": "^/(?!/)(?!.*\\.\\.)[A-Za-z0-9._~/-]*$"
+						}
+					},
+					"if": {
+						"properties": {
+							"type": {
+								"const": "oauth2-device"
+							}
+						},
+						"required": [
+							"type"
+						]
+					},
+					"then": {
+						"required": [
+							"scopes",
+							"deviceEndpoint",
+							"tokenEndpoint"
+						],
+						"properties": {
+							"scopes": {},
+							"deviceEndpoint": {},
+							"tokenEndpoint": {}
+						}
+					},
+					"description": "oauth2-device: the user approves on the business's own page (RFC 8628 style); tokens are bound to the agent's key (DPoP style)."
+				},
+				"sideEffects": {
+					"type": "boolean"
+				},
+				"requiresUserConfirmation": {
+					"type": "boolean"
+				},
+				"payment": {
+					"type": "boolean"
+				},
+				"description": {
+					"description": "What this action does, in plain words, for an agent that does not know the capability.",
+					"type": "string",
+					"maxLength": 300
+				},
+				"output": {
+					"description": "JSON Schema of the response, so an agent knows what it gets back.",
+					"type": "object"
+				},
+				"sharesPersonalData": {
+					"description": "Which input fields carry the user's personal data, what kind, and why. A client shows this when the user confirms, and sends no field the action does not declare. A field not listed here is not claimed to be non-personal: this is a duty of the business to state, not a detector.",
+					"type": "array",
+					"maxItems": 20,
+					"items": {
+						"type": "object",
+						"required": [
+							"field",
+							"kind",
+							"purpose"
+						],
+						"additionalProperties": false,
+						"properties": {
+							"field": {
+								"type": "string",
+								"pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$"
+							},
+							"kind": {
+								"enum": [
+									"name",
+									"email",
+									"phone",
+									"address",
+									"identifier",
+									"other"
+								]
+							},
+							"purpose": {
+								"type": "string",
+								"minLength": 1,
+								"maxLength": 120
+							}
+						}
+					}
+				}
+			},
+			"allOf": [
+				{
+					"description": "An action with side effects must always ask the user.",
+					"if": {
+						"properties": {
+							"sideEffects": {
+								"const": true
+							}
+						},
+						"required": [
+							"sideEffects"
+						]
+					},
+					"then": {
+						"required": [
+							"requiresUserConfirmation"
+						],
+						"properties": {
+							"requiresUserConfirmation": {
+								"const": true
+							}
+						}
+					}
+				},
+				{
+					"description": "A payment action is a side-effecting action.",
+					"if": {
+						"properties": {
+							"payment": {
+								"const": true
+							}
+						},
+						"required": [
+							"payment"
+						]
+					},
+					"then": {
+						"required": [
+							"sideEffects"
+						],
+						"properties": {
+							"sideEffects": {
+								"const": true
+							}
+						}
+					}
+				}
+			]
+		}
+	}
+}

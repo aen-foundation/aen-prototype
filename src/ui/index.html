@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>AEN agent (prototype)</title>
+		<style>
+			:root { --bg:#060b16; --panel:#0d1526; --line:#1e2a45; --ink:#eef2fb; --muted:#9aa8c2; --signal:#7ea1ff; --warn:#f3c56b; --ok:#7bd88f; --bad:#ff8c8c; color-scheme: dark; }
+			* { box-sizing: border-box; }
+			body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif; height:100dvh; display:flex; flex-direction:column; }
+			header { display:flex; flex-wrap:wrap; gap:.5rem 1rem; align-items:center; padding:.75rem 1rem; border-bottom:1px solid var(--line); }
+			header h1 { font-size:1rem; font-weight:600; margin:0; }
+			.badge { font-size:.75rem; padding:.15rem .5rem; border:1px solid var(--line); border-radius:99px; color:var(--muted); }
+			.badge.warn { color:var(--warn); border-color:#5a4a1c; }
+			header .spacer { flex:1; }
+			button, .btn { font:inherit; cursor:pointer; color:var(--ink); background:transparent; border:1px solid var(--line); border-radius:.4rem; padding:.45rem .8rem; text-decoration:none; display:inline-block; }
+			button:hover, .btn:hover { border-color:var(--signal); }
+			button.primary { background:var(--signal); color:#06102a; border-color:var(--signal); font-weight:600; }
+			button:disabled { opacity:.5; cursor:not-allowed; }
+			main { flex:1; min-height:0; display:grid; grid-template-columns: minmax(0,1fr) 22rem; }
+			#toggle { display:none; } @media (max-width: 860px) { main { grid-template-columns: 1fr; grid-template-rows: 1fr auto; } aside { display:none; max-height:32dvh; border-left:0 !important; border-top:1px solid var(--line); } aside.open { display:block; } #toggle { display:inline-block; } }
+			.chat { display:flex; flex-direction:column; min-height:0; }
+			#log { flex:1; overflow-y:auto; padding:1rem; display:flex; flex-direction:column; gap:.75rem; }
+			.msg { max-width:46rem; padding:.6rem .85rem; border-radius:.6rem; white-space:pre-wrap; overflow-wrap:anywhere; }
+			.msg.user { align-self:flex-end; background:#16264a; }
+			.msg.agent { align-self:flex-start; background:var(--panel); border:1px solid var(--line); }
+			.msg.error { align-self:flex-start; color:var(--bad); border:1px solid #5a2323; background:#1c0d0d; }
+			.card { align-self:flex-start; max-width:46rem; border:1px solid var(--line); border-left:3px solid var(--signal); border-radius:.5rem; padding:.7rem .85rem; background:var(--panel); }
+			.card h2 { font-size:.8rem; margin:0 0 .35rem; color:var(--muted); font-weight:600; text-transform:none; }
+			.card.confirm { border-left-color:var(--warn); } .card.pay { border-left-color:var(--ok); }
+			.card pre { margin:.25rem 0 .6rem; padding:.5rem; background:#08101f; border-radius:.35rem; overflow:auto; font-size:.8rem; }
+			.card .row { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.4rem; }
+			.hint { color:var(--muted); font-size:.85rem; }
+			form { display:flex; gap:.5rem; padding:.75rem 1rem; border-top:1px solid var(--line); }
+			input[type=text] { flex:1; font:inherit; color:var(--ink); background:var(--panel); border:1px solid var(--line); border-radius:.4rem; padding:.55rem .7rem; min-width:0; }
+			.chips { display:flex; flex-wrap:wrap; gap:.4rem; padding:0 1rem .5rem; }
+			.chips button { font-size:.85rem; padding:.25rem .6rem; color:var(--muted); }
+			aside { border-left:1px solid var(--line); overflow-y:auto; padding:.75rem; min-height:0; }
+			aside h2 { font-size:.8rem; color:var(--muted); font-weight:600; margin:.1rem 0 .5rem; }
+			.tool { border:1px solid var(--line); border-radius:.4rem; margin-bottom:.4rem; background:var(--panel); }
+			.tool summary { cursor:pointer; padding:.4rem .6rem; font-size:.85rem; list-style:none; display:flex; justify-content:space-between; gap:.5rem; }
+			.tool summary b { font-family:ui-monospace, monospace; font-weight:500; }
+			.tool.ok summary span { color:var(--ok); } .tool.bad summary span { color:var(--bad); }
+			.tool pre { margin:0; padding:.5rem .6rem; font-size:.75rem; overflow:auto; border-top:1px solid var(--line); max-height:14rem; }
+			.empty { color:var(--muted); font-size:.85rem; }
+		</style>
+	</head>
+	<body>
+		<header>
+			<h1>AEN agent <span class="hint">prototype</span></h1>
+			<span class="badge warn">test mode: no real money</span>
+			<span class="badge" id="model">{{MODEL}}</span>
+			<span class="spacer"></span>
+			<button id="toggle" type="button">Tool calls</button>
+			<button id="reset" type="button">New conversation</button>
+		</header>
+		<main>
+			<section class="chat">
+				<div id="log" role="log" aria-live="polite"></div>
+				<div class="chips" id="chips"></div>
+				<form id="form">
+					<input id="text" type="text" autocomplete="off" placeholder="Ask the agent, for example: order two espressos" aria-label="Message" maxlength="1000" />
+					<button class="primary" id="send">Send</button>
+				</form>
+			</section>
+			<aside>
+				<h2>What the agent did</h2>
+				<div id="trace"><p class="empty">Tool calls appear here.</p></div>
+			</aside>
+		</main>
+
+		<script>
+			const $ = (id) => document.getElementById(id)
+			const log = $('log'), trace = $('trace'), text = $('text'), send = $('send')
+			let sid = sessionStorage.getItem('aen-sid') || crypto.randomUUID()
+			sessionStorage.setItem('aen-sid', sid)
+			let busy = false
+
+			const el = (tag, cls, content) => { const e = document.createElement(tag); if (cls) e.className = cls; if (content !== undefined) e.textContent = content; return e }
+			const scroll = () => { log.scrollTop = log.scrollHeight }
+			const add = (node) => { log.append(node); scroll(); return node }
+			// Only plain http(s) links to a business's own pages are ever shown as links.
+			const link = (href, label) => { const a = el('a', 'btn', label); try { const u = new URL(href); if (u.protocol === 'http:' || u.protocol === 'https:') { a.href = u.href; a.target = '_blank'; a.rel = 'noopener noreferrer' } } catch {} return a }
+
+			async function api(path, body) {
+				const r = await fetch(path, { method: body ? 'POST' : 'GET', headers: { 'content-type': 'application/json', 'x-aen-ui': '1' }, body: body && JSON.stringify({ sessionId: sid, ...body }) })
+				return { status: r.status, data: await r.json().catch(() => ({})) }
+			}
+
+			function setBusy(b) { busy = b; send.disabled = b; text.disabled = b; document.querySelectorAll('.card button').forEach((x) => (x.disabled = b)) }
+
+			function renderTrace(e) {
+				if (trace.querySelector('.empty')) trace.innerHTML = ''
+				const d = el('details', 'tool ' + (e.ok ? 'ok' : 'bad'))
+				const s = el('summary'); s.append(el('b', '', e.name), el('span', '', e.summary)); d.append(s)
+				d.append(el('pre', '', JSON.stringify({ args: e.args, result: e.result }, null, 2)))
+				trace.append(d); trace.scrollTop = trace.scrollHeight
+			}
+
+			function card(kind, title) { const c = el('div', 'card ' + kind); c.append(el('h2', '', title)); return c }
+
+			function renderEvent(e) {
+				if (e.type === 'tool') return renderTrace(e)
+				if (e.type === 'authorization') {
+					const c = card('', 'The business asks for your approval')
+					c.append(el('p', '', 'Open the business page, check the code, and approve. Then come back here.'), el('p', 'hint', 'Code: ' + e.userCode))
+					const row = el('div', 'row'); row.append(link(e.uri, 'Open approval page'))
+					const done = el('button', '', 'I approved, continue'); done.onclick = () => ask('I approved access. Please continue.'); row.append(done)
+					c.append(row); add(c)
+				}
+				if (e.type === 'confirm') {
+					const c = card('confirm', 'Confirm before the agent acts')
+					c.append(el('p', '', 'The agent wants to call "' + e.action + '" at ' + (e.businessName ? e.businessName + ' (' + e.business + ')' : e.business) + ' with:'), el('pre', '', JSON.stringify(e.input, null, 2)))
+					if (e.shares && e.shares.length) { const s = el('p', 'hint', 'This shares your personal data: ' + e.shares.map((x) => x.kind + ' (' + x.field + ') ' + String.fromCharCode(8211) + ' ' + x.purpose).join('; ')); c.append(s) }
+					const row = el('div', 'row')
+					const ok = el('button', 'primary', 'Confirm'); ok.onclick = () => decide(e.id, 'approve', c)
+					const no = el('button', '', 'Cancel'); no.onclick = () => decide(e.id, 'deny', c)
+					row.append(ok, no); c.append(row); add(c)
+				}
+				if (e.type === 'payment') {
+					const c = card('pay', 'Payment: you pay, not the agent')
+					c.append(el('p', '', 'Amount: ' + (e.amount / 100).toFixed(2) + ' ' + e.currency), el('p', 'hint', e.note || 'Test mode: nothing real is charged.'))
+					const row = el('div', 'row')
+					if (e.wallet) { const w = el('button', 'primary', 'Pay ' + (e.amount / 100).toFixed(2) + ' with test wallet'); w.onclick = () => { c.querySelectorAll('button').forEach((b) => b.remove()); c.append(el('p', 'hint', 'Paying with your wallet…')); run('/api/pay', { id: e.orderId }) }; row.append(w) }
+					row.append(link(e.url, e.wallet ? 'Or pay on the business page' : 'Open payment page'))
+					const done = el('button', '', 'I paid on the page, check my order'); done.onclick = () => ask('I paid. Please check the status of my order.'); row.append(done)
+					c.append(row); add(c)
+				}
+				if (e.type === 'paid') {
+					const c = card('pay', 'Paid'); c.append(el('p', '', (e.amount / 100).toFixed(2) + ' ' + e.currency + ' paid with your test wallet. The business confirmed it.'), el('p', 'hint', 'One approval, no payment page. Test mode: nothing real was charged.')); add(c)
+				}
+			}
+
+			async function run(path, body, label) {
+				if (busy) return
+				setBusy(true)
+				const thinking = add(el('div', 'msg agent', 'Thinking…'))
+				const { status, data } = await api(path, body)
+				thinking.remove()
+				;(data.events || []).forEach(renderEvent)
+				if (status === 200) add(el('div', 'msg agent', data.reply || '(no answer)'))
+				else add(el('div', 'msg error', data.message || data.error || 'Something went wrong (' + status + ').'))
+				setBusy(false); scroll(); text.focus()
+			}
+
+			function ask(t) { add(el('div', 'msg user', t)); run('/api/chat', { text: t }) }
+			function decide(id, decision, c) { c.querySelectorAll('button').forEach((b) => b.remove()); c.append(el('p', 'hint', decision === 'approve' ? 'You confirmed.' : 'You cancelled.')); run('/api/confirm', { id, decision }) }
+
+			$('form').onsubmit = (ev) => { ev.preventDefault(); const t = text.value.trim(); if (!t) return; text.value = ''; ask(t) }
+			$('toggle').onclick = () => document.querySelector('aside').classList.toggle('open')
+			$('reset').onclick = async () => { await api('/api/reset', {}); sid = crypto.randomUUID(); sessionStorage.setItem('aen-sid', sid); log.innerHTML = ''; trace.innerHTML = '<p class="empty">Tool calls appear here.</p>'; greet() }
+
+			;['Find a coffee shop that takes orders', 'What does Corner Cafe sell?', 'Order two espressos'].forEach((t) => { const b = el('button', '', t); b.type = 'button'; b.onclick = () => ask(t); $('chips').append(b) })
+
+			function greet() { add(el('div', 'msg agent', 'Hi. I can find businesses in the AEN directory and order from them. You stay in control: I never act without your confirmation, and you pay on the payment page yourself.')) }
+			api('/api/state').then(({ data }) => { if (!data.hasKey) add(el('div', 'msg error', 'No Gemini API key is set. Copy .env.example to .env, add GEMINI_API_KEY, and restart the server.')) })
+			greet()
+		</script>
+	</body>
+</html>

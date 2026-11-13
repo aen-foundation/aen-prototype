@@ -1,0 +1,25 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://aen.foundation/schemas/0.1/payment-handoff.json",
+	"title": "Payment hand-off (prototype 0.1, draft)",
+	"description": "Response of a payment action. The agent shows the amount to the user and sends them to handoffUrl; the user pays on the provider's own page. No card data, no money, no payment credentials ever pass through AEN.",
+	"type": "object",
+	"required": ["status", "orderId", "amount", "handoffUrl", "expiresAt", "provider"],
+	"additionalProperties": false,
+	"properties": {
+		"status": { "const": "requires_user_approval" },
+		"orderId": { "type": "string", "minLength": 8, "maxLength": 64 },
+		"amount": {
+			"type": "object",
+			"required": ["amount", "currency"],
+			"additionalProperties": false,
+			"properties": {
+				"amount": { "type": "integer", "minimum": 0 },
+				"currency": { "type": "string", "pattern": "^[A-Z]{3}$" }
+			}
+		},
+		"handoffUrl": { "type": "string", "format": "uri" },
+		"expiresAt": { "type": "string", "format": "date-time" },
+		"provider": { "type": "string", "maxLength": 60 }
+	}
+}

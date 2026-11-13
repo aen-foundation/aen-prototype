@@ -1,0 +1,108 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://aen.foundation/schemas/0.1/payment-result.json",
+	"title": "Payment result (prototype 0.1, draft)",
+	"description": "Response of an order.pay action. completed: the business took the payment with the token and the order is final. authentication_required: the bank or provider needs the user, so fall back to the hand-off page. No card data, ever.",
+	"type": "object",
+	"required": [
+		"status",
+		"orderId"
+	],
+	"additionalProperties": false,
+	"properties": {
+		"status": {
+			"enum": [
+				"completed",
+				"authentication_required"
+			]
+		},
+		"orderId": {
+			"type": "string",
+			"minLength": 8,
+			"maxLength": 64
+		},
+		"amount": {
+			"type": "object",
+			"required": [
+				"amount",
+				"currency"
+			],
+			"additionalProperties": false,
+			"properties": {
+				"amount": {
+					"type": "integer",
+					"minimum": 0
+				},
+				"currency": {
+					"type": "string",
+					"pattern": "^[A-Z]{3}$"
+				}
+			}
+		},
+		"paidAt": {
+			"type": "string",
+			"format": "date-time"
+		},
+		"handoffUrl": {
+			"type": "string",
+			"format": "uri"
+		},
+		"expiresAt": {
+			"type": "string",
+			"format": "date-time"
+		},
+		"provider": {
+			"type": "string",
+			"maxLength": 60
+		}
+	},
+	"allOf": [
+		{
+			"if": {
+				"properties": {
+					"status": {
+						"const": "completed"
+					}
+				},
+				"required": [
+					"status"
+				]
+			},
+			"then": {
+				"required": [
+					"amount",
+					"paidAt"
+				],
+				"properties": {
+					"amount": {},
+					"paidAt": {},
+					"handoffUrl": false
+				}
+			}
+		},
+		{
+			"if": {
+				"properties": {
+					"status": {
+						"const": "authentication_required"
+					}
+				},
+				"required": [
+					"status"
+				]
+			},
+			"then": {
+				"required": [
+					"handoffUrl",
+					"expiresAt",
+					"provider"
+				],
+				"properties": {
+					"handoffUrl": {},
+					"expiresAt": {},
+					"provider": {}
+				}
+			}
+		}
+	]
+}

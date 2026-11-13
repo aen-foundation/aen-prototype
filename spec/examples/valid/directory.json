@@ -1,0 +1,9 @@
+{
+	"aen": "0.1",
+	"id": "dir.example.net",
+	"kind": "directory",
+	"name": "Example Regional Directory",
+	"url": "https://dir.example.net",
+	"categories": ["regional"],
+	"actions": [{ "id": "search", "capability": "directory.search", "method": "GET", "path": "/search", "input": { "type": "object", "properties": { "q": { "type": "string" }, "category": { "type": "string" } } }, "auth": { "type": "none" }, "sideEffects": false }]
+}

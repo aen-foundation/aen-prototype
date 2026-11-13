@@ -1,0 +1,26 @@
+{
+	"aen": "0.1",
+	"id": "bad.example.org",
+	"kind": "business",
+	"name": "Bad",
+	"description": "Best coffee in town",
+	"services": [
+		{
+			"id": "espresso",
+			"name": "Espresso",
+			"price": {
+				"amount": 350,
+				"currency": "USD"
+			}
+		}
+	],
+	"locations": [
+		{
+			"name": "Old Town",
+			"country": "LK"
+		}
+	],
+	"policies": {
+		"refund": "24h"
+	}
+}

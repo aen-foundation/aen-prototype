@@ -1,0 +1,1 @@
+{ "aen": "0.1", "id": "bad.example.org", "kind": "business", "name": "Bad", "events": { "path": "//evil.example.com/stream" } }

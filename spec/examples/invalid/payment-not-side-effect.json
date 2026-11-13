@@ -1,0 +1,2 @@
+{ "aen": "0.1", "id": "bad.example.org", "kind": "business", "name": "Bad", "url": "https://bad.example.org",
+	"actions": [{ "id": "buy", "capability": "order.create", "method": "POST", "path": "/buy", "auth": { "type": "none" }, "sideEffects": false, "payment": true }] }

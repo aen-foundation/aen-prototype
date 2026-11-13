@@ -1,0 +1,13 @@
+{
+	"aen": "0.1",
+	"id": "pay.example.com",
+	"kind": "vendor",
+	"name": "ExamplePay",
+	"categories": [
+		"payments"
+	],
+	"keywords": [
+		"checkout"
+	],
+	"x-docs": "https://pay.example.com/docs"
+}

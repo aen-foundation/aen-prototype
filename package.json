@@ -1,0 +1,43 @@
+{
+	"name": "aen-prototype",
+	"version": "0.1.0",
+	"private": true,
+	"description": "Prototype of the AEN protocol: schemas, reference code and threat model. Not a specification.",
+	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/aen-foundation/aen-prototype.git"
+	},
+	"bugs": {
+		"url": "https://github.com/aen-foundation/aen-prototype/issues"
+	},
+	"homepage": "https://aen.foundation",
+	"type": "module",
+	"packageManager": "pnpm@12.18.0",
+	"engines": {
+		"node": ">=22"
+	},
+	"scripts": {
+		"validate": "tsx src/validate.ts",
+		"test": "vitest run",
+		"check": "tsc --noEmit",
+		"demo": "tsx src/demo.ts",
+		"directory": "tsx src/directory/server.ts",
+		"cafe": "tsx src/business/cafe.ts",
+		"mcp": "tsx src/adapter/mcp.ts",
+		"ui": "node --env-file-if-exists=.env --import tsx src/ui/server.ts"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.32.2",
+		"ajv": "^8.20.0",
+		"ajv-formats": "^3.0.1",
+		"undici": "^8.12.4",
+		"zod": "^4.6.7"
+	},
+	"devDependencies": {
+		"@types/node": "^26.6.6",
+		"tsx": "^4.23.15",
+		"typescript": "^7.0.2",
+		"vitest": "^5.1.0"
+	}
+}

@@ -1,0 +1,2 @@
+{ "aen": "0.1", "id": "bad.example.org", "kind": "business", "name": "Bad", "url": "https://bad.example.org",
+	"actions": [{ "id": "x", "capability": "catalog.search", "method": "GET", "path": "/a/../../admin", "auth": { "type": "none" }, "sideEffects": false }] }

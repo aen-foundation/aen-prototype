@@ -1,0 +1,2 @@
+{ "aen": "0.1", "id": "bad.example.org", "kind": "business", "name": "Bad", "url": "https://bad.example.org",
+	"actions": [{ "id": "x", "capability": "order.status", "method": "GET", "path": "/x", "auth": { "type": "oauth2-device" }, "sideEffects": false }] }

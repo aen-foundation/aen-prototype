@@ -1,0 +1,140 @@
+{
+	"aen": "0.1",
+	"id": "stay.example.org",
+	"kind": "business",
+	"name": "Harbour Stay",
+	"categories": [
+		"accommodation"
+	],
+	"url": "https://stay.example.org",
+	"actions": [
+		{
+			"id": "availability",
+			"capability": "availability.check",
+			"method": "GET",
+			"path": "/availability",
+			"input": {
+				"type": "object",
+				"required": [
+					"from",
+					"to"
+				]
+			},
+			"auth": {
+				"type": "none"
+			},
+			"sideEffects": false
+		},
+		{
+			"id": "book",
+			"capability": "order.create",
+			"method": "POST",
+			"path": "/bookings",
+			"auth": {
+				"type": "oauth2-device",
+				"scopes": [
+					"order.create"
+				],
+				"deviceEndpoint": "/oauth/device",
+				"tokenEndpoint": "/oauth/token"
+			},
+			"sideEffects": true,
+			"requiresUserConfirmation": true,
+			"payment": true
+		},
+		{
+			"id": "spa",
+			"capability": "x.spa.book",
+			"method": "POST",
+			"path": "/spa/bookings",
+			"description": "Book a 60 minute spa slot at the hotel.",
+			"input": {
+				"type": "object",
+				"required": [
+					"slot",
+					"guests"
+				],
+				"properties": {
+					"slot": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"guests": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 4
+					}
+				}
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"bookingId": {
+						"type": "string"
+					}
+				}
+			},
+			"auth": {
+				"type": "oauth2-device",
+				"scopes": [
+					"x.spa.book"
+				],
+				"deviceEndpoint": "/oauth/device",
+				"tokenEndpoint": "/oauth/token"
+			},
+			"sideEffects": true,
+			"requiresUserConfirmation": true
+		},
+		{
+			"id": "ask-question",
+			"capability": "contact.request",
+			"method": "POST",
+			"path": "/enquiries",
+			"description": "Send the hotel a question.",
+			"input": {
+				"type": "object",
+				"required": [
+					"message",
+					"email"
+				],
+				"additionalProperties": false,
+				"properties": {
+					"message": {
+						"type": "string",
+						"maxLength": 1000
+					},
+					"email": {
+						"type": "string",
+						"format": "email"
+					}
+				}
+			},
+			"auth": {
+				"type": "oauth2-device",
+				"scopes": [
+					"contact.request"
+				],
+				"deviceEndpoint": "/oauth/device",
+				"tokenEndpoint": "/oauth/token"
+			},
+			"sideEffects": true,
+			"requiresUserConfirmation": true,
+			"sharesPersonalData": [
+				{
+					"field": "email",
+					"kind": "email",
+					"purpose": "so the hotel can reply to your question"
+				}
+			]
+		}
+	],
+	"payment": {
+		"modes": [
+			"handoff"
+		],
+		"provider": "example-pay"
+	},
+	"countries": [
+		"PT"
+	]
+}
