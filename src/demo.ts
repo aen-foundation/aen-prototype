@@ -5,9 +5,10 @@ import { createClient } from './adapter/client.ts'
 import { startCafe } from './business/cafe.ts'
 import { startDirectory } from './directory/server.ts'
 
-export async function runDemo(log: (s: string) => void = console.log) {
-	const dir = await startDirectory({ port: 4100, allowPrivate: true })
-	const cafe = await startCafe({ port: 4101, stepMs: 100 })
+/** Ports are parameters so tests can run while a dev server (`pnpm ui`, `pnpm demo`) is using the defaults. */
+export async function runDemo(log: (s: string) => void = console.log, ports = { directory: 4100, cafe: 4101 }) {
+	const dir = await startDirectory({ port: ports.directory, allowPrivate: true })
+	const cafe = await startCafe({ port: ports.cafe, stepMs: 100 })
 	const agent = createClient(dir.url, { allowPrivate: true })
 	try {
 		const reg = await fetch(`${dir.url}/register`, { method: 'POST', body: JSON.stringify({ url: cafe.url }) })

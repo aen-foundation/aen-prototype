@@ -121,11 +121,12 @@ describe('Gemini UI', () => {
 		expect(t.data.events.some((e: any) => e.type === 'confirm')).toBe(false)
 	})
 
-	it('reports a Gemini error without crashing', async () => {
-		queue.push({ error: { message: 'API key not valid' } })
+	it('reports a Gemini error without crashing, and keeps a long message that names the replacement model', async () => {
+		queue.push({ error: { message: 'This model models/old-model is no longer available to new users. ' + 'x'.repeat(250) + ' Please update your code to use models/new-model.' } })
 		const t = await post('/api/chat', { text: 'hello' })
 		expect(t.status).toBe(502)
-		expect(t.data.message).toContain('API key not valid')
+		expect(t.data.message).toContain('no longer available')
+		expect(t.data.message).toContain('models/new-model') // past the old 200-character cut-off
 		expect(JSON.stringify(t.data)).not.toContain(KEY)
 	})
 

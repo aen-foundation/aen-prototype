@@ -19,7 +19,7 @@ export async function startUi(opts: { port: number; directoryUrl: string; gemini
 	const base = `http://127.0.0.1:${opts.port}`
 	const cfg = {
 		apiKey: opts.gemini?.apiKey ?? process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY ?? '',
-		model: opts.gemini?.model ?? process.env.GEMINI_MODEL ?? 'gemini-2.5-flash',
+		model: opts.gemini?.model ?? process.env.GEMINI_MODEL ?? 'gemini-3.8-flash',
 		baseUrl: opts.gemini?.baseUrl ?? 'https://generativelanguage.googleapis.com'
 	}
 	const sessions = new Map<string, Session>()

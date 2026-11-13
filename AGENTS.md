@@ -30,7 +30,7 @@ README CONTRIBUTING CODE_OF_CONDUCT SECURITY GOVERNANCE TRADEMARKS   open-source
 ## Commands
 
 - Done means: `pnpm check` (tsc) and `pnpm test` pass, and `pnpm demo` ends with `order.status -> ready`.
-- `pnpm ui` (http://127.0.0.1:4200; starts a sample directory + cafe; needs `GEMINI_API_KEY` in a git-ignored `.env`, see `.env.example`; `GEMINI_MODEL` optional). Never print, log, commit or send the key anywhere but Gemini.
+- `pnpm ui` (http://127.0.0.1:4200; starts a sample directory + cafe; needs `GEMINI_API_KEY` in a git-ignored `.env`, see `.env.example`; `GEMINI_MODEL` optional, default `gemini-3.8-flash`; Google retires models, so a 404 "no longer available" means pick a current one from https://aistudio.google.com/docs/models). Never print, log, commit or send the key anywhere but Gemini.
 - `pnpm validate <file.json> [kind]`, `pnpm cafe`, `pnpm directory` (`ALLOW_PRIVATE=1` to register localhost), `pnpm mcp` (set `AEN_DIRECTORY_URL`; `AEN_ALLOW_PRIVATE=1` only for local demos).
 
 ## Workflow
