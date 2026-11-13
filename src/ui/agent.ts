@@ -57,11 +57,11 @@ async function generate(cfg: GeminiConfig, contents: Content[]) {
 	const r = await fetch(`${cfg.baseUrl}/v1beta/models/${encodeURIComponent(cfg.model)}:generateContent`, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json', 'x-goog-api-key': cfg.apiKey },
-		body: JSON.stringify({ systemInstruction: { parts: [{ text: SYSTEM }] }, contents, tools: TOOLS, generationConfig: { temperature: 0.2 } }),
+		body: JSON.stringify({ systemInstruction: { parts: [{ text: SYSTEM }] }, contents, tools: TOOLS }),
 		signal: AbortSignal.timeout(45_000)
 	})
 	const body = (await r.json().catch(() => ({}))) as { candidates?: { content?: Content }[]; error?: { message?: string } }
-	if (!r.ok) throw new Error(`Gemini API ${r.status}: ${body.error?.message?.slice(0, 200) ?? 'request failed'}`)
+	if (!r.ok) throw new Error(`Gemini API ${r.status}: ${body.error?.message?.slice(0, 600) ?? 'request failed'}`)
 	return body.candidates?.[0]?.content
 }
 

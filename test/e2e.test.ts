@@ -24,7 +24,7 @@ const listen = (handler: Parameters<typeof createServer>[1], port: number) => {
 }
 
 describe('full flow', () => {
-	it('searches, gets approval, orders, hands off the payment and reaches ready', async () => expect(await runDemo(() => {})).toBe(true))
+	it('searches, gets approval, orders, hands off the payment and reaches ready', async () => expect(await runDemo(() => {}, { directory: 4660, cafe: 4661 })).toBe(true))
 })
 
 describe('agent and business guards', () => {
